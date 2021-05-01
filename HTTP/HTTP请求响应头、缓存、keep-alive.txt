@@ -89,3 +89,71 @@
 
     HTTP1.0中默认是关闭的，需要在HTTP头加入“Connection：Keep-clive”，才能启用Keep-Alive;HTTP1.1中默认启用Keep-Alive
     加入“Connection：close”关闭
+
+5. options预请求
+    1. HTTP共有八种常见请求方法
+        get: 参数在url上，浏览器长度有限制，不安全
+        post: 参数不可见，长度不收限制
+        put: 上传最新内容到指定位置
+        delete: 删除请求的url所表示的资源
+        head： 不返回响应主题，主要用于客户端查看服务器性能
+        options： 与head类似，是客户端用于查看服务器的性能，JavaScript的XMLHttpRequest对象进行CORS跨域资源共享时，
+        就是使用OPTIONS方法发送嗅探请求，以判断是否有对指定资源的访问权限
+        connect： http1.1预留的，将连接方式改为管道方式，通常用于SSL加密服务的链接与HTTP非加密的代理服务器之间的通信
+
+        一般来说我们只需要用到post和get，但是如果后端是ResetFul设计规范下就需要用到各种语义化的方法了
+    2. 什么是预请求
+        预请求就是复杂请求（可能对服务器数据产生副作用的HTTP请求方法，如put，delete都会对服务器数据进行修改，所以要先
+        询问服务器）
+        跨域请求中，浏览器自发的发起的预请求，浏览器会查询到两次请求，第一次的请求参数是options，以检测实际请求是否可以
+        被浏览器接受
+
+    3. 为什么需要
+        w3c规范要求，对复杂请求，浏览器必须先使用options发起一个预检请求，从而获知服务器是否允许该跨域请求，服务器确认以
+        后才能发起实际的HTTP请求，否则停止第二次正式请求
+        为什么不常见options请求
+        因为大部分使用的get，post请求属于简单请求，简单请求不会触发options请求
+
+    4. 什么情况下发生（以下都属于复杂请求）
+        请求方法不是get、head、post
+        post的content-type不是application/x-www-form-urlencode，multipart/form-data，text/plain [也就是
+        content-type设置成application/json]
+        请求设置了自定义的header字段：比如业务需求，穿一个字段，方便后端获取，不需要每个接口都传
+    5. 为什么需要设置成content-type： 'application/json'
+        ajax发送复杂的json数据结构，处理方式困难，服务端难以解析，所以有了application/json这种类型，服务端好
+        解析并且比较统一，如果请求中没有设置成json格式的，有的服务端收到也会改成json的，但是如何请求中就改成json格式
+        的就会发生options预请求
+
+        如果设置了
+        表示json格式的字符串，发送的json对象必须使用json.stringfy进行序列化字符串才能匹配
+        spring需要使用@RequestBody来注解
+
+        如果没设置
+        默认将使用content-type：'application/json' application/x-www-form-urlencoded
+    6. 需要配置什么
+        在CORS中，可以使用OPTIONS放大发起一个预检请求，服务器基于从预检请求获得的信息来判断，以检测实际请求
+        是否可以被服务器接受
+
+        预请求的请求报文中要设置
+        Access-Control-Request-Method首部字段：告知服务器实际请求所使用的HTTP方法
+        Access-Control-Request-Headers首部字段：告知服务器实际请求所携带的自定义首部字段
+
+        同时服务器端或者nginx需要设置响应体
+        Access-Control-Allow-Origin : * 【跨域】
+        Access-Control-Allow-Methods:POST,GET,OPTIONS,DELEDET 【所允许的请求方法告知客户端】
+        Access-Control-Allow-Headers: X-Requested-With, accept, origin, content-type【自定义的请求头】
+        Access-Control-Allow-Age:3600  
+        【一段时间内不需要再次预请求，直接用本次结果即可】
+        "Content-Type", "application/json;charset=utf-8"
+    7. options作用
+        主要有两个
+        获取服务器支持的HTTP请求方法；也是黑客经常使用的方法
+        用来检查服务器的性能。例如：AJAX进行跨域请求时的预检，需要向另外一个域名的资源发送一个options请求，用以
+        判断实际方发送的请求是否安全
+    8. 跨域方法
+        JSONP跨域
+        CORS跨域资源共享：options请求做嗅探
+        webSocket：全双工通信
+        img src: 不受浏览器的同源限制        
+
+
