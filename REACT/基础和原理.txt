@@ -1,0 +1,263 @@
+event不是原生event 是合成event
+event.nativeEvent.target指向当前元素
+event.nativeEvent.currentTarget指向document（事件挂载到document）
+
+组件通信
+props context redux ref
+
+
+setState
+不可变值
+可能是异步更新
+可能会被合并
+
+shouldComponentUpdate生命周期会拿旧值与新值对比确定是否更新视图，以此优化性能
+
+settimeout和自定义事件时同步的
+
+异步时会合并 传入函数不会合并
+
+
+
+单组件生命周期
+
+# 初始化渲染
+constructor->componentWillMount->render->componentDidMount
+# 更新
+shouldComponentUpdate->componentWillUpdate->render->componentDidUpdate
+
+
+父子组件生命周期
+# 初始化渲染
+父组件constructor->父组件componentWillMount->父组件render->子组件constructor->
+子组件componentWillMount->子组件render->子组件componentDidMount->父组件componentDidMout
+# 更新
+# 父组件setState
+父组件shouldComponentUpdate->父组件componentWillUpdate->父组件render->
+子组件->shouldComponentUpdate->子组件componentWillUpdate->子组件render->子组件componentDidUpdate
+->父组件componentDidUpdate
+# componentWillReceiveProps在shouldComponentUpdate之前
+子组件更新不触发父组件更新
+
+
+
+
+Portals传送门
+组件默认会按照既定层次嵌套渲染
+Portals可以使组件渲染到父组件以外
+# fixed元素要放到body上，有更好的浏览器兼容性
+return ReactDOM.createPortal(
+    <div>this.props.children</div>,
+    document.body
+)
+
+
+context
+公共信息（语言、主题）如何传递给每个组件
+用props太繁琐
+redux小题大做
+
+
+性能优化
+shouldComponentUpdate(简称SCU)
+PureComponent和React.memo
+不可变值immutable.js
+
+SCU
+多组件 父组件更新是否需要更新子组件
+shouldComponentUpdate为何不直接返回true
+
+SCU配合不可变值(必要，否则前后值一样)
+SCU需要才优化
+深度比较（一次性递归到底消耗性能）
+
+PureComponent和memo
+PureComponent,SCU中实现了浅比较
+memo,函数组件的PureComponent
+浅比较已适用大部分情况（尽量不做深度比较）
+
+
+memo
+function MyCom(props){
+
+}
+function diff(preProps,nextProps){
+
+}
+export default React.memo(MyCom,diff)
+
+
+render props
+Render props的核心思想
+通过一个函数将class组件的state作为props传递给纯函数组件
+
+class Factory{
+    constructor(){
+        this.state={}
+    }
+    render(){
+        return <div>
+            { this.props.render(this.state) }
+        </div>
+    }
+}
+
+const App = () => {
+    <Factory 
+        render={props=><p>{props.a}</p>}
+    />
+}
+
+
+
+合成事件机制
+更好的兼容性可跨平台
+挂载到document，减少内存消耗，避免频繁解绑
+方便事件的统一管理（如事务机制）
+
+
+setState和batchUpdate
+有时异步（普通使用），有时同步（setTimeout、DOM事件）
+有时合并（对象形式），有时不合并（函数形式）
+
+
+核心要点
+setState主流程
+batchUpdate机制
+transaction（事务）机制
+
+
+
+setState主流程
+
+this.setState(newState)
+newState存入pending队列
+判断是否处于batch Update 
+如果是 保存组件于dirtyComponents中
+如果否 遍历所有的dirtyComponents    调用updateComponent 更新pending state 和 props
+
+
+isBatchingUpdates
+
+add = () => {
+    isBatchingUpdates = true 
+    this.setState({
+        count: this.state.count + 1
+    })
+
+    isBatchingUpdates = false
+}
+
+add = () => {
+    isBatchingUpdates = true
+    setTimeout(()=>{
+        this.setState({
+            count: this.count + 1
+        })
+    },0)
+    isBatchingUpdates = false
+}
+
+
+setState异步还是同步
+无所谓异步还是同步
+看是否命中batchUpdate机制
+判断isBatchingUpdates
+
+哪些能命中batchUpdate机制
+生命周期（和它调用的函数）
+React中注册的事件（和它调用的函数）
+React可以管理的入口
+
+哪些不能命中batchUpdate机制
+setTimeout setInterval（和它调用的函数）
+自定义Dom事件（和它调用的函数）
+React 管不到 的入口
+
+
+transaction事务机制
+
+transaction.initialize = function(){
+    console.log('initialize')
+}
+
+transaction.close = function(){
+    console.log('close')
+}
+
+function method(){
+    console.log('method')
+}
+
+transaction.perform(method)
+
+
+JSX如何渲染为页面
+setState之后如何更新页面
+
+回顾JSX本质和vdom
+JSX即createElement函数
+执行生成vnode
+patch(elem,vnode)和patch（vnode,newVnode）生成真实dom
+
+
+组件更新过程
+setState(newState)->dirtyComponents(可能有子组件)
+render()生成newVnode
+patch(vnode,newVnode)
+
+
+更新的两个阶段
+上面的patch被拆分为两个阶段：
+reconciliation阶段(协调阶段)--执行diff算法，纯JS计算
+commit阶段--将diff结果渲染DOM
+
+可能会有性能问题
+JS是单线程，且和DOM渲染共用一个线程
+当组件足够复杂，组件更新时计算和渲染都压力大
+同时再有DOM操作需求（动画、鼠标拖拽等），将卡顿
+
+解决方案 fiber
+将reconciliation阶段进行任务拆分（commit无法拆分）
+DOM需要渲染时暂停，空闲时回付
+window.requestIdleCallback
+
+
+
+diff算法
+1. tree diff 优化
+    同级比较 不同直接删掉重建不再对比子级
+2. component diff
+    同一类型组件可以用shouldComponentUpdate()判断Virtual DOM是否变化
+    没有变化不再进行diff,变化了，对相关节点update
+3. element diff
+    同一层级的子节点可以通过key来区分并遵循上面两个策略
+
+
+vue和react diff 区别
+都是忽略跨级比较只做统计比较
+vue对比节点，当节点元素类型相同，className不同，认为是不同类型元素，删除重建
+而react会认为是同类型节点，只是修改节点属性
+
+vue的列表比对，采用两端到中间的比对方式，而react则采用从左到右依次比对的方式。
+当一个集合，只是把最后一个节点移动到了第一个，react会把前面的节点依次移动，而vue
+只会把最后一个节点移动到第一个。总体上，vue的对比方式更高效
+
+
+vue
+（开始和开始对比 
+最后和最后对比
+开始和最后对比
+最后和开始对比
+（ 相同 patchVnode  移动指针）
+
+都未命中
+拿新节点的key，能否对应上oldChl中某个节点的key
+没对应上 重建插入
+
+对应上 patchVnode
+看tag是否相等
+
+key相等tag不等  重建插入
+key相等 tag相等）
+

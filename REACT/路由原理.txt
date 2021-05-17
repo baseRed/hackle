@@ -1,0 +1,42 @@
+hash模式 http://www.baidu.com/#user=2
+hash变化会触发网页跳转，即浏览器的前进后退
+hash变化不会刷新页面，SPA必需特点
+hash不会提交到sever端(前端自生自灭)
+
+hash变化包括
+1. js修改url
+2. 手动修改url的hash
+3. 浏览器前进后退
+window.onhashchange = (event) => {
+    console.log(event.oldURL)
+    console.log(event.newURL)
+    console.log(location.hash)
+}
+页面初次加载获取hash
+document.addEventListener('DOMContentLoaded', ()=>{
+    console.log(location.hash)
+})
+
+
+H5 history 模式 http://www.baidu.com/user/20
+用url规范的路由，但跳转时不刷新页面
+history.pushState
+window.onpopstate
+
+需要server支持,无特殊需求可选择hash模式
+
+页面初次加载获取hash
+document.addEventListener('DOMContentLoaded', ()=>{
+    console.log(location.pathname)
+})
+
+// 打开一个新路由用pushState,浏览器不会刷新页面
+document.getElementById('btn').addEventListener('click',()=>{
+    const state = {name: 'page1'}
+    history.pushState(state,'','page1')
+})
+
+//监听浏览器前进后退
+window.onpopstate = (event) => {
+    console.log('onpopstate',event.state, location.pathname)
+}
