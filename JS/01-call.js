@@ -5,7 +5,7 @@ Function.prototype.mycall = function(context){
     context = !context ? window : typeof context === 'object' ? context : {}
     const args = [...arguments].slice(1)
     context.fn = this
-    const result = context.fn(args)
+    const result = context.fn(...args)
     delete context.fn
     return result
 }
