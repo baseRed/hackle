@@ -1,27 +1,17 @@
 function curry(fn, args) {
-    var length = fn.length;
+    const length = fn.length
+    args = args || []
 
-    args = args || [];
-
-    return function() {
-
-        var _args = args.slice(0),
-
-            arg, i;
-
-        for (i = 0; i < arguments.length; i++) {
-
-            arg = arguments[i];
-
-            _args.push(arg);
-
+    return function(){
+        const _args = [...args, ...arguments]
+        
+        if(_args.length < length){
+            return curry.call(this,fn,_args)
+        }else{
+            return fn.apply(this,_args)
         }
-        if (_args.length < length) {
-            return curry.call(this, fn, _args);
-        }
-        else {
-            return fn.apply(this, _args);
-        }
+        
+        
     }
 }
 
