@@ -107,6 +107,12 @@ btn.addEventListener("click", function(e){
 // currentTarget: 事件绑定的元素
 
 
+// onclick addEventListener 区别
+// onclick只能添加一个，移除（=null） 无法控制事件冒泡捕获
+// addEventListener可以添加多个，有移除方法，可以控制冒泡捕获
+
+
+
 
 
 
