@@ -64,6 +64,9 @@
     webpack如何实现懒加载
     import（）
     结合Vue，React异步组件
+    vue const Component = ()=>import('../component')
+    vue3 component = defineAsyncComponent(()=>import('./components/AsyncComponent.vue'))
+    react const component = React.lazy(()=>import('./component'))
     结合Vue-Route，React-Route
 
     Proxy为什么不能Polyfill
@@ -430,6 +433,7 @@ ParalleUglifyPlugin(用于生产环境，开发环境不需要)
 自动刷新
 热更新
 DLLPlugin
+条件允许时使用新版本node
 
 性能优化-产出代码
 体积更小
