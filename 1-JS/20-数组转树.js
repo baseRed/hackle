@@ -70,4 +70,33 @@ function arrToTree(data) {
          return result;
    }
 
-console.log(arrToTree(data))
+   function arrTransTree(data){
+        let result = []
+        if(!Array.isArray(data) || data.length === 0){
+            return result
+        }
+
+        let map = {}
+
+        data.forEach(item=>{
+            map[item.id] = item
+        })
+
+        data.forEach(item=>{
+            let parent = item.parentId
+
+            if(parent){
+                if(!map[parent].children){
+                    map[parent].children = []
+                }
+                map[parent].children.push(item)
+            }else{
+                result.push(item)
+            }
+        })
+
+        return result
+
+   }
+
+console.log(arrTransTree(data))
