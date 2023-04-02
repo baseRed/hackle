@@ -7,7 +7,7 @@ class Promise{
         const reject = function(value){
             if(this.state === 'pending'){
                 this.value = value
-                this.state = 'fulfilled'
+                this.state = 'resolved'
             }
         }
         
@@ -27,7 +27,7 @@ class Promise{
     
     then(onFulfilled,onRejected){
         switch (this.state){
-            case 'fulfilled':
+            case 'resolved':
                 onFulfilled(this.value)
                 break;
             case 'rejected':
